@@ -1,3 +1,8 @@
+CREATE OR REPLACE TABLE taxi_zone AS
+SELECT * FROM read_csv('taxi_zone_lookup.csv');
+
+SELECT * FROM taxi_zone;
+
 CREATE OR REPLACE TABLE yellow_data_n_tratado AS 
 SELECT * FROM read_parquet('yellow_tripdata_2024-01.parquet');
 
@@ -55,7 +60,6 @@ FROM
 WHERE
     trip_distance > 0;
 
-
 select * from tratamento_inicial;
 
 INSERT INTO Dim_Data (data, dia, mes, ano, dia_semana, fim_semana) 
@@ -73,3 +77,8 @@ SELECT horario_saida, hora_saida, minuto_saida, segundo_saida, faixa_horario_sai
 ORDER BY hora_entrada, minuto_entrada, segundo_entrada;
 
 SELECT * FROM Dim_Horario;
+
+INSERT INTO Dim_Local (local_id, bairro, zona, zona_servico)
+SELECT LocationID, Borough, Zone, service_zone FROM taxi_zone;
+
+SELECT * FROM Dim_Local

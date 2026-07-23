@@ -1,4 +1,7 @@
 CREATE OR REPLACE SEQUENCE dim_data_seq START 1;
+
+CREATE OR REPLACE SEQUENCE dim_horario_seq START 1; 
+
 CREATE OR REPLACE TABLE Dim_Data (
     data_id INT DEFAULT nextval('dim_data_seq') PRIMARY KEY,
     data VARCHAR,
@@ -6,10 +9,9 @@ CREATE OR REPLACE TABLE Dim_Data (
     dia INT,
     mes INT,
     dia_semana VARCHAR,
-    fim_semana BOOLEAN
+    fim_semana VARCHAR
 );
 
-CREATE OR REPLACE SEQUENCE dim_horario_seq START 1; 
 CREATE OR REPLACE TABLE Dim_Horario  (
     horario_id INT DEFAULT nextval('dim_horario_seq') PRIMARY KEY,
     horario VARCHAR,
@@ -41,8 +43,8 @@ CREATE OR REPLACE TABLE Dim_Ratecode (
     nome_ratecode VARCHAR
 );
 
-CREATE OR REPLACE TABLE Fact_Trip (
-    id_vendedor INT REFERENCES Dim_Vendedor(vendor_id),
+CREATE OR REPLACE TABLE Fato_Viagem (
+    id_vendedor INT REFERENCES Dim_Vendedor(vendedor_id),
     data_entrada INT REFERENCES Dim_Data(data_id),
     horario_entrada INT REFERENCES Dim_Horario(horario_id),
     data_saida INT REFERENCES Dim_Data(data_id),
@@ -65,3 +67,4 @@ CREATE OR REPLACE TABLE Fact_Trip (
     taxa_aeroporto DOUBLE
 );
 
+SHOW TABLES;
