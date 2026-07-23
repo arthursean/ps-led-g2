@@ -57,8 +57,13 @@ SELECT
     COALESCE(CASE WHEN payment_type != 4 AND Airport_fee < 0 THEN Airport_fee * -1 ELSE Airport_fee END, 0.0) as taxa_aeroporto
 FROM
     yellow_data_n_tratado
-WHERE
-    trip_distance > 0;
+WHERE 
+    trip_distance > 0 
+    AND (
+        (EXTRACT(YEAR FROM tpep_pickup_datetime) = 2024 AND EXTRACT(MONTH FROM tpep_pickup_datetime) = 1)
+        OR 
+        (EXTRACT(YEAR FROM tpep_dropoff_datetime) = 2024 AND EXTRACT(MONTH FROM tpep_dropoff_datetime) = 1)
+    );
 
 select * from tratamento_inicial;
 
