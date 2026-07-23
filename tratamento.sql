@@ -1,8 +1,6 @@
 CREATE OR REPLACE TABLE taxi_zone AS
 SELECT * FROM read_csv('taxi_zone_lookup.csv');
 
-SELECT * FROM taxi_zone;
-
 CREATE OR REPLACE TABLE yellow_data_n_tratado AS 
 SELECT * FROM read_parquet('yellow_tripdata_2024-01.parquet');
 
@@ -73,7 +71,6 @@ UNION
 SELECT data_saida, dia_saida, mes_saida, ano_saida, dia_semana_saida, saida_final_de_semana FROM tratamento_inicial
 ORDER BY ano_entrada, mes_entrada, dia_entrada;
 
-SELECT * FROM Dim_Data;
 
 INSERT INTO Dim_Horario (horario, hora, minuto, segundo, faixa_horario) 
 SELECT horario_entrada, hora_entrada, minuto_entrada, segundo_entrada, faixa_horario_entrada FROM tratamento_inicial
@@ -81,9 +78,59 @@ UNION
 SELECT horario_saida, hora_saida, minuto_saida, segundo_saida, faixa_horario_saida FROM tratamento_inicial
 ORDER BY hora_entrada, minuto_entrada, segundo_entrada;
 
-SELECT * FROM Dim_Horario;
 
 INSERT INTO Dim_Local (local_id, bairro, zona, zona_servico)
 SELECT LocationID, Borough, Zone, service_zone FROM taxi_zone;
 
-SELECT * FROM Dim_Local
+INSERT INTO Dim_Pagamento (pagamento_id, tipo_pagamento)
+SELECT DISTINCT tipo_pagamento,
+    CASE tipo_pagamento 
+    WHEN 0 THEN 'Flex Fare trip'
+    WHEN 1 THEN 'Credit card'
+    WHEN 2 THEN 'Cash'
+    WHEN 3 THEN 'No charge'
+    WHEN 4 THEN 'Dispute'
+    WHEN 5 THEN 'Unknown'
+    WHEN 6 THEN 'Voided trip'
+    END AS nome_pagamento
+FROM tratamento_inicial
+ORDER BY tipo_pagamento;
+
+INSERT INTO Dim_Vendedor (vendedor_id, nome_vendedor)
+SELECT DISTINCT id_empresa,
+    CASE id_empresa 
+    WHEN 1 THEN 'Creative Mobile Technologies, LLC'
+    WHEN 2 THEN 'Curb Mobility, LLC'
+    WHEN 6 THEN 'Myle Technologies Inc'
+    WHEN 7 THEN 'Helix'
+    END AS nome_vendedor
+FROM tratamento_inicial
+ORDER BY id_empresa;
+
+INSERT INTO Dim_Ratecode (ratecode_id, nome_ratecode)
+SELECT DISTINCT rate_code_normalizado,
+    CASE rate_code_normalizado 
+    WHEN 1 THEN 'Standard rate'
+    WHEN 2 THEN 'JFK'
+    WHEN 3 THEN 'Newark'
+    WHEN 4 THEN 'Nassau or Westchester'
+    WHEN 5 THEN 'Negotiated fare'
+    WHEN 6 THEN 'Group ride'
+    WHEN 99 THEN 'Null/unknown'
+    END AS nome_ratecode
+FROM tratamento_inicial
+ORDER BY rate_code_normalizado;
+
+INSERT INTO Fato_Viagem (vendedor_id, ratecode_id, pagamento_id, data_entrada, horario_entrada, data_saida, horario_saida, local_entrada_id, local_saida_id, qnt_passageiros, distancia_corrida, store_and_fwd_flag, custo_tarifa, custo_adicional, imposto_mta, valor_gorjeta, custo_pedagios, custo_melhoria_sistema_taxi, valor_total_corrida, taxa_congestionamento, taxa_aeroporto)
+SELECT t.id_empresa, t.rate_code_normalizado, t.tipo_pagamento, data_entrada.data_id, horario_entrada.horario_id, data_saida.data_id, horario_saida.horario_id, t.local_entrada, t.local_saida, t.qnt_passageiros, t.distancia_corrida, t.store_and_fwd_normalizado, t.custo_tarifa, t.custo_adicional, t.taxa_fixa_mta, t.valor_gorjeta, t.custo_pedagios, t.custo_melhoria_sistema_taxi, t.valor_total_corrida, t.taxa_extra_congestionamento, t.taxa_aeroporto
+FROM tratamento_inicial t
+LEFT JOIN Dim_Data data_entrada
+    ON t.data_entrada = data_entrada.data
+LEFT JOIN Dim_Data data_saida
+    ON t.data_saida = data_saida.data
+LEFT JOIN Dim_Horario horario_entrada
+    ON t.horario_entrada = horario_entrada.horario
+LEFT JOIN Dim_Horario horario_saida
+    ON t.horario_saida = horario_saida.horario;
+
+SELECT * FROM Fato_Viagem

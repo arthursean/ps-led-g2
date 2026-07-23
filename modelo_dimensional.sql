@@ -4,17 +4,18 @@ CREATE OR REPLACE SEQUENCE dim_horario_seq START 1;
 
 CREATE OR REPLACE TABLE Dim_Data (
     data_id INT DEFAULT nextval('dim_data_seq') PRIMARY KEY,
-    data VARCHAR,
+    data VARCHAR UNIQUE,
     ano INT,
     dia INT,
     mes INT,
     dia_semana VARCHAR,
     fim_semana VARCHAR
 );
+SELECT * FROM Dim_Data;
 
 CREATE OR REPLACE TABLE Dim_Horario  (
     horario_id INT DEFAULT nextval('dim_horario_seq') PRIMARY KEY,
-    horario VARCHAR,
+    horario VARCHAR UNIQUE,
     hora INT,
     minuto INT,
     segundo INT,
@@ -44,7 +45,7 @@ CREATE OR REPLACE TABLE Dim_Ratecode (
 );
 
 CREATE OR REPLACE TABLE Fato_Viagem (
-    id_vendedor INT REFERENCES Dim_Vendedor(vendedor_id),
+    vendedor_id INT REFERENCES Dim_Vendedor(vendedor_id),
     data_entrada INT REFERENCES Dim_Data(data_id),
     horario_entrada INT REFERENCES Dim_Horario(horario_id),
     data_saida INT REFERENCES Dim_Data(data_id),
