@@ -1,3 +1,6 @@
+CREATE OR REPLACE TABLE yellow_data_n_tratado AS 
+SELECT * FROM read_parquet('yellow_tripdata_2024-01.parquet');
+
 CREATE OR REPLACE VIEW tratamento_inicial  AS
 SELECT
     VendorId as id_empresa,
@@ -12,8 +15,11 @@ SELECT
     CASE WHEN payment_type != 4 AND tolls_amount < 0 THEN tolls_amount * -1 ELSE tolls_amount END AS custo_pedagios,
     CASE WHEN payment_type != 4 AND improvement_surcharge < 0 THEN improvement_surcharge * -1 ELSE improvement_surcharge END AS custo_melhoria_sistema_taxi,
     CASE WHEN payment_type != 4 AND total_amount < 0 THEN total_amount * -1 ELSE total_amount END AS valor_total_corrida,
+    strftime(tpep_pickup_datetime, '%d/%m/%Y') AS data_entrada,
+    strftime(tpep_pickup_datetime, '%H:%M:%S') AS horario_entrada,
     EXTRACT(HOUR FROM tpep_pickup_datetime) AS hora_entrada,
-    EXTRACT(MINUTE FROM tpep_pickup_datetime) AS minuto_entrada, 
+    EXTRACT(MINUTE FROM tpep_pickup_datetime) AS minuto_entrada,
+    EXTRACT(SECOND FROM tpep_pickup_datetime) AS segundo_entrada,  
     EXTRACT(YEAR FROM tpep_pickup_datetime) AS ano_entrada, 
     EXTRACT(DAY FROM tpep_pickup_datetime) AS dia_entrada,  
     EXTRACT(MONTH FROM tpep_pickup_datetime) AS mes_entrada,
@@ -24,8 +30,11 @@ SELECT
     WHEN 3 THEN 'Quarta' WHEN 4 THEN 'Quinta' WHEN 5 THEN 'Sexta'
     END AS dia_semana_entrada,
     CASE WHEN EXTRACT(DOW FROM tpep_pickup_datetime)  IN (0,6) THEN 'Sim' ELSE 'Não' END AS entrada_final_de_semana,
+    strftime(tpep_dropoff_datetime, '%d/%m/%Y') AS data_saida,
+    strftime(tpep_dropoff_datetime, '%H:%M:%S') AS horario_saida,
     EXTRACT(HOUR FROM tpep_dropoff_datetime) AS hora_saida,
     EXTRACT(MINUTE FROM tpep_dropoff_datetime) AS minuto_saida,
+    EXTRACT(SECOND FROM tpep_dropoff_datetime) AS segundo_saida,
     EXTRACT(YEAR FROM tpep_dropoff_datetime) AS ano_saida,  
     EXTRACT(DAY FROM tpep_dropoff_datetime) AS dia_saida,
     EXTRACT(MONTH FROM tpep_dropoff_datetime) AS mes_saida, 
@@ -33,11 +42,10 @@ SELECT
     WHEN 6 THEN 'Sábado' WHEN 1 THEN 'Segunda' WHEN 2 THEN 'Terça'
     WHEN 3 THEN 'Quarta' WHEN 4 THEN 'Quinta' WHEN 5 THEN 'Sexta'
     END AS dia_semana_saida,
-    DATEDIFF('MINUTE', tpep_pickup_datetime, tpep_dropoff_datetime) as duracao_corrida,
     CASE WHEN hora_saida BETWEEN 0 and 5 THEN 'Madrugada' WHEN hora_saida BETWEEN 5 and 12 THEN 'Manhã'
     WHEN hora_saida BETWEEN 12 and 18 THEN 'Tarde'  ELSE 'Noite' END AS faixa_horario_saida,
     CASE WHEN EXTRACT(DOW FROM tpep_dropoff_datetime) IN (0,6) THEN 'Sim' ELSE 'Não' END AS saida_final_de_semana,
-    passenger_count as qnt_passageiros,
+    COALESCE(passenger_count, 1) as qnt_passageiros,
     COALESCE(store_and_fwd_flag, 'N') as store_and_fwd_normalizado,
     COALESCE(RatecodeID, 99) as rate_code_normalizado,
     COALESCE(CASE WHEN payment_type != 4 AND congestion_surcharge < 0 THEN congestion_surcharge * -1 ELSE congestion_surcharge END , 0.0) as taxa_extra_congestionamento,
@@ -46,4 +54,22 @@ FROM
     yellow_data_n_tratado
 WHERE
     trip_distance > 0;
-SELECT * FROM tratamento_inicial 
+
+
+select * from tratamento_inicial;
+
+INSERT INTO Dim_Data (data, dia, mes, ano, dia_semana, fim_semana) 
+SELECT data_entrada, dia_entrada, mes_entrada, ano_entrada, dia_semana_entrada, entrada_final_de_semana FROM tratamento_inicial
+UNION
+SELECT data_saida, dia_saida, mes_saida, ano_saida, dia_semana_saida, saida_final_de_semana FROM tratamento_inicial
+ORDER BY ano_entrada, mes_entrada, dia_entrada;
+
+SELECT * FROM Dim_Data;
+
+INSERT INTO Dim_Horario (horario, hora, minuto, segundo, faixa_horario) 
+SELECT horario_entrada, hora_entrada, minuto_entrada, segundo_entrada, faixa_horario_entrada FROM tratamento_inicial
+UNION
+SELECT horario_saida, hora_saida, minuto_saida, segundo_saida, faixa_horario_saida FROM tratamento_inicial
+ORDER BY hora_entrada, minuto_entrada, segundo_entrada;
+
+SELECT * FROM Dim_Horario;
