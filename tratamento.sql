@@ -68,8 +68,7 @@ WHERE
         (EXTRACT(YEAR FROM tpep_pickup_datetime) = 2024 AND EXTRACT(MONTH FROM tpep_pickup_datetime) = 1)
         OR 
         (EXTRACT(YEAR FROM tpep_dropoff_datetime) = 2024 AND EXTRACT(MONTH FROM tpep_dropoff_datetime) = 1)
-    )
-    AND (distancia_corrida > 0.11 AND duracao_corrida > 2);
+    );
 
 select * from tratamento_inicial;
 
