@@ -22,7 +22,7 @@ SELECT
     LEAST(tpep_pickup_datetime, tpep_dropoff_datetime) as tpep_pickup_datetime_corrigido,
     GREATEST(tpep_pickup_datetime, tpep_dropoff_datetime) as tpep_dropoff_datetime_corrigido,
     CASE WHEN trip_distance > 0.1 AND  trip_distance < 150 THEN trip_distance
-    WHEN RatecodeID IN (1, 3, 4) AND custo_tarifa > 3.0 THEN ROUND(((custo_tarifa - 3.00) / 3.50), 2)
+    WHEN custo_tarifa > 3.0 THEN ROUND(((custo_tarifa - 3.00) / 3.50), 2)
     END AS distancia_corrida, 
     strftime(tpep_pickup_datetime_corrigido, '%d/%m/%Y') AS data_entrada,
     strftime(tpep_pickup_datetime_corrigido, '%H:%M:%S') AS horario_entrada,
