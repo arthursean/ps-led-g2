@@ -19,9 +19,9 @@ SELECT
     CASE WHEN payment_type != 4 AND total_amount < 0 THEN total_amount * -1 ELSE total_amount END AS valor_total_corrida,
     LEAST(tpep_pickup_datetime, tpep_dropoff_datetime) as tpep_pickup_datetime_corrigido,
     GREATEST(tpep_pickup_datetime, tpep_dropoff_datetime) as tpep_dropoff_datetime_corrigido,
-    CASE WHEN trip_distance > 0.1 AND  trip_distance < 150 THEN trip_distance
-    WHEN custo_tarifa > 3.0 THEN ROUND(((custo_tarifa - 3.00) / 3.50), 2)
-    ELSE custo_tarifa
+    CASE WHEN trip_distance > 0.1 AND  trip_distance < 150 THEN ABS(trip_distance)
+    WHEN ABS(custo_tarifa) > 3.0 THEN ROUND(((ABS(custo_tarifa) - 3.00) / 3.50), 2)
+    ELSE ABS(trip_distance)
     END AS distancia_corrida, 
     CAST(tpep_pickup_datetime_corrigido AS DATE) AS data_entrada,
     CAST(tpep_pickup_datetime_corrigido AS TIME) AS horario_entrada,
@@ -47,7 +47,7 @@ select * from tratamento_inicial;
 
 INSERT INTO Dim_Data (data_raw, data_format, dia, mes, ano, dia_semana, fim_semana) 
 SELECT data_entrada, 
-    STRFTIME(tpep_pickup_datetime_corrigido, '%D/%M/%Y'), 
+    STRFTIME(tpep_pickup_datetime_corrigido, '%d/%m/%Y'), 
     EXTRACT(DAY FROM tpep_pickup_datetime_corrigido),
     EXTRACT(MONTH FROM tpep_pickup_datetime_corrigido), 
     EXTRACT(YEAR FROM tpep_pickup_datetime_corrigido), 
@@ -56,7 +56,7 @@ SELECT data_entrada,
 FROM tratamento_inicial
 UNION
 SELECT data_saida, 
-    STRFTIME(tpep_dropoff_datetime_corrigido, '%D/%M/%Y'), 
+    STRFTIME(tpep_dropoff_datetime_corrigido, '%d/%m/%Y'), 
     EXTRACT(DAY FROM tpep_dropoff_datetime_corrigido), 
     EXTRACT(MONTH FROM tpep_dropoff_datetime_corrigido), 
     EXTRACT(YEAR FROM tpep_dropoff_datetime_corrigido), 
