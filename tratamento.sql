@@ -22,36 +22,10 @@ SELECT
     CASE WHEN trip_distance > 0.1 AND  trip_distance < 150 THEN trip_distance
     WHEN custo_tarifa > 3.0 THEN ROUND(((custo_tarifa - 3.00) / 3.50), 2)
     END AS distancia_corrida, 
-    strftime(tpep_pickup_datetime_corrigido, '%d/%m/%Y') AS data_entrada,
-    strftime(tpep_pickup_datetime_corrigido, '%H:%M:%S') AS horario_entrada,
-    EXTRACT(HOUR FROM tpep_pickup_datetime_corrigido) AS hora_entrada,
-    EXTRACT(MINUTE FROM tpep_pickup_datetime_corrigido) AS minuto_entrada,
-    EXTRACT(SECOND FROM tpep_pickup_datetime_corrigido) AS segundo_entrada,  
-    EXTRACT(YEAR FROM tpep_pickup_datetime_corrigido) AS ano_entrada, 
-    EXTRACT(DAY FROM tpep_pickup_datetime_corrigido) AS dia_entrada,  
-    EXTRACT(MONTH FROM tpep_pickup_datetime_corrigido) AS mes_entrada,
-    CASE WHEN hora_entrada BETWEEN 0 and 5 THEN 'Madrugada' WHEN hora_entrada BETWEEN 5 and 12 THEN 'Manhã'
-    WHEN hora_entrada BETWEEN 12 and 18 THEN 'Tarde' ELSE 'Noite' END AS faixa_horario_entrada,
-    CASE EXTRACT(DOW FROM tpep_pickup_datetime_corrigido) WHEN 0 THEN 'Domingo'
-    WHEN 6 THEN 'Sábado' WHEN 1 THEN 'Segunda' WHEN 2 THEN 'Terça'
-    WHEN 3 THEN 'Quarta' WHEN 4 THEN 'Quinta' WHEN 5 THEN 'Sexta'
-    END AS dia_semana_entrada,
-    CASE WHEN EXTRACT(DOW FROM tpep_pickup_datetime_corrigido)  IN (0,6) THEN 'Sim' ELSE 'Não' END AS entrada_final_de_semana,
-    strftime(tpep_dropoff_datetime_corrigido, '%d/%m/%Y') AS data_saida,
-    strftime(tpep_dropoff_datetime_corrigido, '%H:%M:%S') AS horario_saida,
-    EXTRACT(HOUR FROM tpep_dropoff_datetime_corrigido) AS hora_saida,
-    EXTRACT(MINUTE FROM tpep_dropoff_datetime_corrigido) AS minuto_saida,
-    EXTRACT(SECOND FROM tpep_dropoff_datetime_corrigido) AS segundo_saida,
-    EXTRACT(YEAR FROM tpep_dropoff_datetime_corrigido) AS ano_saida,  
-    EXTRACT(DAY FROM tpep_dropoff_datetime_corrigido) AS dia_saida,
-    EXTRACT(MONTH FROM tpep_dropoff_datetime_corrigido) AS mes_saida, 
-    CASE EXTRACT(DOW FROM tpep_dropoff_datetime_corrigido) WHEN 0 THEN 'Domingo'
-    WHEN 6 THEN 'Sábado' WHEN 1 THEN 'Segunda' WHEN 2 THEN 'Terça'
-    WHEN 3 THEN 'Quarta' WHEN 4 THEN 'Quinta' WHEN 5 THEN 'Sexta'
-    END AS dia_semana_saida,
-    CASE WHEN hora_saida BETWEEN 0 and 5 THEN 'Madrugada' WHEN hora_saida BETWEEN 5 and 12 THEN 'Manhã'
-    WHEN hora_saida BETWEEN 12 and 18 THEN 'Tarde'  ELSE 'Noite' END AS faixa_horario_saida,
-    CASE WHEN EXTRACT(DOW FROM tpep_dropoff_datetime_corrigido) IN (0,6) THEN 'Sim' ELSE 'Não' END AS saida_final_de_semana,
+    CAST(tpep_pickup_datetime_corrigido AS DATE) AS data_entrada,
+    CAST(tpep_pickup_datetime_corrigido AS TIME) AS horario_entrada,
+    CAST(tpep_dropoff_datetime_corrigido AS DATE) AS data_saida,
+    CAST(tpep_dropoff_datetime_corrigido AS TIME) AS horario_saida,
     DATEDIFF('MINUTE', tpep_pickup_datetime_corrigido, tpep_dropoff_datetime_corrigido) as duracao_corrida,
     COALESCE(passenger_count, 1) as qnt_passageiros,
     COALESCE(store_and_fwd_flag, 'N') as store_and_fwd_normalizado,
@@ -70,19 +44,44 @@ WHERE
 
 select * from tratamento_inicial;
 
-INSERT INTO Dim_Data (data, dia, mes, ano, dia_semana, fim_semana) 
-SELECT data_entrada, dia_entrada, mes_entrada, ano_entrada, dia_semana_entrada, entrada_final_de_semana FROM tratamento_inicial
+INSERT INTO Dim_Data (data_raw, data_format, dia, mes, ano, dia_semana, fim_semana) 
+SELECT data_entrada, 
+    STRFTIME(tpep_pickup_datetime_corrigido, '%D/%M/%Y'), 
+    EXTRACT(DAY FROM tpep_pickup_datetime_corrigido),
+    EXTRACT(MONTH FROM tpep_pickup_datetime_corrigido), 
+    EXTRACT(YEAR FROM tpep_pickup_datetime_corrigido), 
+    CASE EXTRACT(DOW FROM tpep_pickup_datetime_corrigido) WHEN 0 THEN 'Domingo' WHEN 6 THEN 'Sábado' WHEN 1 THEN 'Segunda' WHEN 2 THEN 'Terça' WHEN 3 THEN 'Quarta' WHEN 4 THEN 'Quinta' WHEN 5 THEN 'Sexta' END, 
+    CASE WHEN EXTRACT(DOW FROM tpep_pickup_datetime_corrigido) IN (0,6) THEN 'Sim' ELSE 'Não' END 
+FROM tratamento_inicial
 UNION
-SELECT data_saida, dia_saida, mes_saida, ano_saida, dia_semana_saida, saida_final_de_semana FROM tratamento_inicial
-ORDER BY ano_entrada, mes_entrada, dia_entrada;
+SELECT data_saida, 
+    STRFTIME(tpep_dropoff_datetime_corrigido, '%D/%M/%Y'), 
+    EXTRACT(DAY FROM tpep_dropoff_datetime_corrigido), 
+    EXTRACT(MONTH FROM tpep_dropoff_datetime_corrigido), 
+    EXTRACT(YEAR FROM tpep_dropoff_datetime_corrigido), 
+    CASE EXTRACT(DOW FROM tpep_dropoff_datetime_corrigido) WHEN 0 THEN 'Domingo' WHEN 6 THEN 'Sábado' WHEN 1 THEN 'Segunda' 
+    WHEN 2 THEN 'Terça' WHEN 3 THEN 'Quarta' WHEN 4 THEN 'Quinta' WHEN 5 THEN 'Sexta' END, 
+    CASE WHEN EXTRACT(DOW FROM tpep_dropoff_datetime_corrigido) IN (0,6) THEN 'Sim' ELSE 'Não' END 
+FROM tratamento_inicial;
 
-
-INSERT INTO Dim_Horario (horario, hora, minuto, segundo, faixa_horario) 
-SELECT horario_entrada, hora_entrada, minuto_entrada, segundo_entrada, faixa_horario_entrada FROM tratamento_inicial
+INSERT INTO Dim_Horario (horario_raw, horario_format, hora, minuto, segundo, faixa_horario) 
+SELECT horario_entrada, 
+    STRFTIME(tpep_pickup_datetime_corrigido, '%H:%M:%S'),
+    EXTRACT(HOUR FROM tpep_pickup_datetime_corrigido) as hora_entrada,
+    EXTRACT(MINUTE FROM tpep_pickup_datetime_corrigido),
+    EXTRACT(SECOND FROM tpep_pickup_datetime_corrigido), 
+    CASE WHEN hora_entrada BETWEEN 0 and 5 THEN 'Madrugada' WHEN hora_entrada BETWEEN 5 and 12 THEN 'Manhã'
+    WHEN hora_entrada BETWEEN 12 and 18 THEN 'Tarde' ELSE 'Noite' END
+FROM tratamento_inicial
 UNION
-SELECT horario_saida, hora_saida, minuto_saida, segundo_saida, faixa_horario_saida FROM tratamento_inicial
-ORDER BY hora_entrada, minuto_entrada, segundo_entrada;
-
+SELECT horario_saida, 
+    STRFTIME(tpep_dropoff_datetime_corrigido, '%H:%M:%S'),
+    EXTRACT(HOUR FROM tpep_dropoff_datetime_corrigido) as hora_saida,
+    EXTRACT(MINUTE FROM tpep_dropoff_datetime_corrigido),
+    EXTRACT(SECOND FROM tpep_dropoff_datetime_corrigido), 
+    CASE WHEN hora_saida BETWEEN 0 and 5 THEN 'Madrugada' WHEN hora_saida BETWEEN 5 and 12 THEN 'Manhã'
+    WHEN hora_saida BETWEEN 12 and 18 THEN 'Tarde' ELSE 'Noite' END
+FROM tratamento_inicial;
 
 INSERT INTO Dim_Local (local_id, bairro, zona, zona_servico)
 SELECT LocationID, Borough, Zone, service_zone FROM taxi_zone;
@@ -130,12 +129,12 @@ INSERT INTO Fato_Viagem (vendedor_id, ratecode_id, pagamento_id, data_entrada, h
 SELECT t.id_empresa, t.rate_code_normalizado, t.tipo_pagamento, data_entrada.data_id, horario_entrada.horario_id, data_saida.data_id, horario_saida.horario_id, t.local_entrada, t.local_saida, t.qnt_passageiros, t.distancia_corrida, t.store_and_fwd_normalizado, t.custo_tarifa, t.custo_adicional, t.taxa_fixa_mta, t.valor_gorjeta, t.custo_pedagios, t.custo_melhoria_sistema_taxi, t.valor_total_corrida, t.taxa_extra_congestionamento, t.taxa_aeroporto
 FROM tratamento_inicial t
 LEFT JOIN Dim_Data data_entrada
-    ON t.data_entrada = data_entrada.data
+    ON t.data_entrada = data_entrada.data_raw
 LEFT JOIN Dim_Data data_saida
-    ON t.data_saida = data_saida.data
+    ON t.data_saida = data_saida.data_raw
 LEFT JOIN Dim_Horario horario_entrada
-    ON t.horario_entrada = horario_entrada.horario
+    ON t.horario_entrada = horario_entrada.horario_raw
 LEFT JOIN Dim_Horario horario_saida
-    ON t.horario_saida = horario_saida.horario;
+    ON t.horario_saida = horario_saida.horario_raw;
 
 SELECT * FROM Fato_Viagem

@@ -4,7 +4,8 @@ CREATE OR REPLACE SEQUENCE dim_horario_seq START 1;
 
 CREATE OR REPLACE TABLE Dim_Data (
     data_id INT DEFAULT nextval('dim_data_seq') PRIMARY KEY,
-    data VARCHAR UNIQUE,
+    data_format VARCHAR UNIQUE,
+    data_raw DATE UNIQUE,
     ano INT,
     dia INT,
     mes INT,
@@ -15,7 +16,8 @@ SELECT * FROM Dim_Data;
 
 CREATE OR REPLACE TABLE Dim_Horario  (
     horario_id INT DEFAULT nextval('dim_horario_seq') PRIMARY KEY,
-    horario VARCHAR UNIQUE,
+    horario_format VARCHAR UNIQUE,
+    horario_raw TIME UNIQUE,
     hora INT,
     minuto INT,
     segundo INT,
