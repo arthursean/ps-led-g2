@@ -53,7 +53,7 @@ CREATE OR REPLACE TABLE Fato_Viagem (
     data_saida INT REFERENCES Dim_Data(data_id),
     horario_saida INT REFERENCES Dim_Horario(horario_id),
     qnt_passageiros INT,
-    distancia_corrida INT,
+    distancia_corrida DOUBLE,
     ratecode_id INT REFERENCES Dim_Ratecode(ratecode_id),
     store_and_fwd_flag VARCHAR,
     local_entrada_id INT REFERENCES Dim_local(local_id),
