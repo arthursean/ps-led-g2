@@ -17,8 +17,12 @@ SELECT
     CASE WHEN payment_type != 4 AND tolls_amount < 0 THEN tolls_amount * -1 ELSE tolls_amount END AS custo_pedagios,
     CASE WHEN payment_type != 4 AND improvement_surcharge < 0 THEN improvement_surcharge * -1 ELSE improvement_surcharge END AS custo_melhoria_sistema_taxi,
     CASE WHEN payment_type != 4 AND total_amount < 0 THEN total_amount * -1 ELSE total_amount END AS valor_total_corrida,
-    LEAST(tpep_pickup_datetime, tpep_dropoff_datetime) as tpep_pickup_datetime_corrigido,
-    GREATEST(tpep_pickup_datetime, tpep_dropoff_datetime) as tpep_dropoff_datetime_corrigido,
+    LEAST(tpep_pickup_datetime, tpep_dropoff_datetime) as data_menor,
+    GREATEST(tpep_pickup_datetime, tpep_dropoff_datetime) as data_maior,
+    CASE WHEN DATEDIFF('DAY', data_menor, data_maior) >= 2 THEN NULL
+    ELSE data_menor END AS tpep_pickup_datetime_corrigido,
+    CASE WHEN DATEDIFF('DAY', data_menor, data_maior) >= 2 THEN NULL
+    ELSE data_maior END AS tpep_dropoff_datetime_corrigido,
     CASE WHEN trip_distance > 0.1 AND  trip_distance < 150 THEN ABS(trip_distance)
     WHEN ABS(custo_tarifa) > 3.0 THEN ROUND(((ABS(custo_tarifa) - 3.00) / 3.50), 2)
     ELSE ABS(trip_distance)
@@ -36,8 +40,9 @@ SELECT
 FROM
     yellow_data_n_tratado
 WHERE 
-    trip_distance > 0 
-    AND (
+    NOT(trip_distance = 0 AND fare_amount = 0) AND
+    ABS(fare_amount) > 3 AND 
+    (
         (EXTRACT(YEAR FROM tpep_pickup_datetime) = 2024 AND EXTRACT(MONTH FROM tpep_pickup_datetime) = 1)
         OR 
         (EXTRACT(YEAR FROM tpep_dropoff_datetime) = 2024 AND EXTRACT(MONTH FROM tpep_dropoff_datetime) = 1)
@@ -138,4 +143,5 @@ LEFT JOIN Dim_Horario horario_entrada
 LEFT JOIN Dim_Horario horario_saida
     ON t.horario_saida = horario_saida.horario_raw;
 
-SELECT * FROM Fato_Viagem
+SELECT * 
+FROM Fato_Viagem
