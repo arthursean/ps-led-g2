@@ -28,7 +28,7 @@ SELECT
     CAST(tpep_dropoff_datetime_corrigido AS DATE) AS data_saida,
     CAST(tpep_dropoff_datetime_corrigido AS TIME) AS horario_saida,
     DATEDIFF('MINUTE', tpep_pickup_datetime_corrigido, tpep_dropoff_datetime_corrigido) as duracao_corrida,
-    COALESCE(passenger_count, 1) as qnt_passageiros,
+    passenger_count as qnt_passageiros,
     COALESCE(store_and_fwd_flag, 'N') as store_and_fwd_normalizado,
     COALESCE(RatecodeID, 99) as rate_code_normalizado,
     COALESCE(CASE WHEN payment_type != 4 AND congestion_surcharge < 0 THEN congestion_surcharge * -1 ELSE congestion_surcharge END , 0.0) as taxa_extra_congestionamento,
