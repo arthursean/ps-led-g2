@@ -4,6 +4,18 @@ SELECT * FROM read_csv('taxi_zone_lookup.csv');
 CREATE OR REPLACE TABLE yellow_data_n_tratado AS 
 SELECT * FROM read_parquet('yellow_tripdata_2024-01.parquet');
 
+CREATE OR REPLACE TABLE viagem_descartes AS
+SELECT *
+FROM yellow_data_n_tratado
+WHERE NOT (
+    NOT(trip_distance = 0 AND fare_amount = 0)
+    AND ABS(fare_amount) > 3
+    AND (
+        (EXTRACT(YEAR FROM tpep_pickup_datetime) = 2024 AND EXTRACT(MONTH FROM tpep_pickup_datetime) = 1)
+        OR 
+        (EXTRACT(YEAR FROM tpep_dropoff_datetime) = 2024 AND EXTRACT(MONTH FROM tpep_dropoff_datetime) = 1) ));
+
+
 CREATE OR REPLACE VIEW tratamento_inicial  AS
 SELECT
     VendorId as id_empresa,
