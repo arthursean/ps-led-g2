@@ -6,6 +6,9 @@ Repositório do projeto destinado ao processo seletivo da **Liga de Engenharia d
 
 ## 📂 Estrutura dos Arquivos
 
+* `docs/`: Pasta contendo as documentações oficiais do projeto.
+  * `Documentação - Grupo 2 - LED.pdf`: Documento principal detalhando a metodologia e justificando todas as decisões de modelagem e limpeza tomadas ao longo do projeto.
+  * `Consultas_sql_g2.pdf`: Documento focado em inteligência de negócio, apresentando consultas, resultados e extração de insights.
 * `yellow_tripdata_2024-01.parquet`: Base de dados bruta contendo as viagens de táxi.
 * `taxi_zone_lookup.csv`: Tabela auxiliar com os nomes das zonas de embarque e desembarque.
 * `modelo_dimensional.sql`: Script responsável pela criação da estrutura do banco de dados (Tabelas Fato, Dimensões e Sequências).
